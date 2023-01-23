@@ -1,6 +1,12 @@
 version: "3"
 
 tasks:
+  install:
+    cmds:
+      - make install
+  build:
+    cmds:
+      - make build
   fetch:
     cmds:
-      - go run main.go fetch threat
+      - ./go-cti fetch threat
