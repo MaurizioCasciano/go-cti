@@ -7,6 +7,9 @@ tasks:
   build:
     cmds:
       - make build
+  clean:
+    cmds:
+      - make clean
   fetch:
     cmds:
       - ./go-cti fetch threat
