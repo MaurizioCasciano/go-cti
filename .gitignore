@@ -26,3 +26,5 @@ cache
 
 # Loging files
 *.log
+
+.idea/
