@@ -1,0 +1,6 @@
+version: "3"
+
+tasks:
+  fetch:
+    cmds:
+      - go run main.go fetch threat
