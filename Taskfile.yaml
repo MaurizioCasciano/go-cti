@@ -1,0 +1,15 @@
+version: "3"
+
+tasks:
+  install:
+    cmds:
+      - make install
+  build:
+    cmds:
+      - make build
+  clean:
+    cmds:
+      - make clean
+  fetch:
+    cmds:
+      - ./go-cti fetch threat
