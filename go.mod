@@ -7,7 +7,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/go-cmp v0.5.9
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
-	github.com/labstack/echo v3.3.10+incompatible
+	github.com/labstack/echo/v4 v4.10.0+incompatible
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/parnurzeal/gorequest v0.2.16
@@ -48,7 +48,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/labstack/echo/v4 v4.9.0 // indirect
+	github.com/labstack/echo/v4 v4.10.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
