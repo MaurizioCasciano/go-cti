@@ -13,3 +13,6 @@ tasks:
   fetch:
     cmds:
       - ./go-cti fetch threat
+  server:
+    cmds:
+      - ./go-cti server
