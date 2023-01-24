@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
+	"github.com/swaggo/echo-swagger"
 	"golang.org/x/xerrors"
 
 	"github.com/vulsio/go-cti/db"
@@ -42,6 +43,9 @@ func Start(logToFile bool, logDir string, driver db.DB) error {
 	e.GET("/cves/:cve", getTechniqueIDsByCveID(driver))
 	e.POST("/multi-cves", getTechniqueIDsByMultiCveID(driver))
 	e.POST("/attackers", getAttackerIDsByTechniqueIDs(driver))
+
+	// Swagger
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	bindURL := fmt.Sprintf("%s:%s", viper.GetString("bind"), viper.GetString("port"))
 	log15.Info("Listening...", "URL", bindURL)
