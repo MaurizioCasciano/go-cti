@@ -22,3 +22,6 @@ tasks:
   swagger:
     cmds:
       - swag init
+  search-cve:
+    cmds:
+      - go run main.go search cve {{.CLI_ARGS}} # CVE-2017-15131
