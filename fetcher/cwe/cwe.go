@@ -5,10 +5,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-
 	"github.com/inconshreveable/log15"
-	"golang.org/x/xerrors"
-
 	"github.com/vulsio/go-cti/utils"
 )
 
@@ -20,11 +17,11 @@ func Fetch() (map[string][]string, error) {
 
 	res, err := utils.FetchURL(cweURL)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to fetch CWE XML. err: %w", err)
+		return nil, fmt.Errorf("Failed to fetch CWE XML. err: %w", err)
 	}
 	mappings, err := parse(res)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to parse CWE XML. err: %w", err)
+		return nil, fmt.Errorf("Failed to parse CWE XML. err: %w", err)
 	}
 	return mappings, nil
 }
@@ -32,7 +29,7 @@ func Fetch() (map[string][]string, error) {
 func parse(res []byte) (map[string][]string, error) {
 	reader, err := zip.NewReader(bytes.NewReader(res), int64(len(res)))
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to new zip Reader. err: %w", err)
+		return nil, fmt.Errorf("Failed to new zip Reader. err: %w", err)
 	}
 
 	cweIDtoCapecIDs := map[string][]string{}
@@ -43,13 +40,13 @@ func parse(res []byte) (map[string][]string, error) {
 
 		r, err := file.Open()
 		if err != nil {
-			return nil, xerrors.Errorf("Failed to open file. err: %w", err)
+			return nil, fmt.Errorf("Failed to open file. err: %w", err)
 		}
 		defer r.Close()
 
 		var catalog weaknessCatalog
 		if err := xml.NewDecoder(r).Decode(&catalog); err != nil {
-			return nil, xerrors.Errorf("Failed to decode xml. err: %w", err)
+			return nil, fmt.Errorf("Failed to decode xml. err: %w", err)
 		}
 
 		for _, weakness := range catalog.Weaknesses.Weakness {

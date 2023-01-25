@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/inconshreveable/log15"
-	"golang.org/x/exp/slices"
-	"golang.org/x/xerrors"
-
 	"github.com/vulsio/go-cti/models"
 	"github.com/vulsio/go-cti/utils"
+	"golang.org/x/exp/slices"
 )
 
 const capecURL = "https://raw.githubusercontent.com/mitre/cti/master/capec/2.1/stix-capec.json"
@@ -20,11 +18,11 @@ func Fetch() ([]models.Technique, error) {
 
 	res, err := utils.FetchURL(capecURL)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to fetch CAPEC JSON. err: %w", err)
+		return nil, fmt.Errorf("Failed to fetch CAPEC JSON. err: %w", err)
 	}
 	techniques, err := parse(res)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to parse CAPEC Cyber Threat Intelligence. err: %w", err)
+		return nil, fmt.Errorf("Failed to parse CAPEC Cyber Threat Intelligence. err: %w", err)
 	}
 	return techniques, nil
 }
@@ -32,7 +30,7 @@ func Fetch() ([]models.Technique, error) {
 func parse(res []byte) ([]models.Technique, error) {
 	var r root
 	if err := json.Unmarshal(res, &r); err != nil {
-		return nil, xerrors.Errorf("Failed to unmarshal json. err: %w", err)
+		return nil, fmt.Errorf("Failed to unmarshal json. err: %w", err)
 	}
 
 	attackPatterns := map[string]attackPattern{}
@@ -158,7 +156,7 @@ func parse(res []byte) ([]models.Technique, error) {
 
 			rels, err := expandFromRefIDToName(refs, nature, attackPatterns)
 			if err != nil {
-				return nil, xerrors.Errorf("Failed to expand %s references. id: %s, err: %w", nature, id, err)
+				return nil, fmt.Errorf("Failed to expand %s references. id: %s, err: %w", nature, id, err)
 			}
 			technique.Capec.Relationships = append(technique.Capec.Relationships, rels...)
 		}
@@ -184,7 +182,7 @@ func parse(res []byte) ([]models.Technique, error) {
 		for _, rel := range relationships[id] {
 			info, ok := additionalInfos[rel.sourceRef]
 			if !ok {
-				return nil, xerrors.Errorf("Failed to get additionalInfo. id: %s, err: broken relationships", rel.id)
+				return nil, fmt.Errorf("Failed to get additionalInfo. id: %s, err: broken relationships", rel.id)
 			}
 			technique.Mitigations = append(technique.Mitigations, models.Mitigation{
 				Name:        info.name,
@@ -258,7 +256,7 @@ func expandFromRefIDToName(references []string, nature string, attackPatterns ma
 	for _, refID := range references {
 		relAttackPattern, ok := attackPatterns[refID]
 		if !ok {
-			return nil, xerrors.Errorf("Failed to get relational attack pattern. missing id: %s, err: broken relationships", refID)
+			return nil, fmt.Errorf("Failed to get relational attack pattern. missing id: %s, err: broken relationships", refID)
 		}
 		rels = append(rels, models.Relationship{
 			Nature:   nature,

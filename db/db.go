@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ type Option struct {
 // NewDB :
 func NewDB(dbType string, dbPath string, debugSQL bool, option Option) (driver DB, locked bool, err error) {
 	if driver, err = newDB(dbType); err != nil {
-		return driver, false, xerrors.Errorf("Failed to new db. err: %w", err)
+		return driver, false, fmt.Errorf("Failed to new db. err: %w", err)
 	}
 
 	if locked, err := driver.OpenDB(dbType, dbPath, debugSQL, option); err != nil {
@@ -48,14 +49,14 @@ func NewDB(dbType string, dbPath string, debugSQL bool, option Option) (driver D
 
 	isV1, err := driver.IsGoCTIModelV1()
 	if err != nil {
-		return nil, false, xerrors.Errorf("Failed to IsGoCTIModelV1. err: %w", err)
+		return nil, false, fmt.Errorf("Failed to IsGoCTIModelV1. err: %w", err)
 	}
 	if isV1 {
 		return nil, false, xerrors.New("Failed to NewDB. Since SchemaVersion is incompatible, delete Database and fetch again.")
 	}
 
 	if err := driver.MigrateDB(); err != nil {
-		return driver, false, xerrors.Errorf("Failed to migrate db. err: %w", err)
+		return driver, false, fmt.Errorf("Failed to migrate db. err: %w", err)
 	}
 	return driver, false, nil
 }
@@ -67,7 +68,7 @@ func newDB(dbType string) (DB, error) {
 	case dialectRedis:
 		return &RedisDriver{name: dbType}, nil
 	}
-	return nil, xerrors.Errorf("Invalid database dialect, %s", dbType)
+	return nil, fmt.Errorf("Invalid database dialect, %s", dbType)
 }
 
 // IndexChunk has a starting point and an ending point for Chunk
@@ -102,7 +103,7 @@ func classCtiIDs(ctiIDs []string) ([]string, []string, error) {
 		} else if strings.HasPrefix(ctiID, "G") || strings.HasPrefix(ctiID, "S") {
 			attackers = append(attackers, ctiID)
 		} else {
-			return nil, nil, xerrors.Errorf(`Failed to class CTI-IDs. err: invalid CTI-ID(%s). The prefix of the CTI-ID must be "T", "CAPEC", "G", or "S".`, ctiID)
+			return nil, nil, fmt.Errorf(`Failed to class CTI-IDs. err: invalid CTI-ID(%s). The prefix of the CTI-ID must be "T", "CAPEC", "G", or "S".`, ctiID)
 		}
 	}
 	return techniques, attackers, nil

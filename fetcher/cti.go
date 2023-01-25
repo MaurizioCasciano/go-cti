@@ -1,8 +1,7 @@
 package fetcher
 
 import (
-	"golang.org/x/xerrors"
-
+	"fmt"
 	"github.com/vulsio/go-cti/fetcher/attack"
 	"github.com/vulsio/go-cti/fetcher/capec"
 	"github.com/vulsio/go-cti/fetcher/cwe"
@@ -14,23 +13,23 @@ import (
 func FetchCti() ([]models.Technique, []models.CveToTechniques, []models.Attacker, error) {
 	attackTechniques, attackers, err := attack.Fetch()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf("Failed to fetch MITRE ATT&CK. err: %w", err)
+		return nil, nil, nil, fmt.Errorf("Failed to fetch MITRE ATT&CK. err: %w", err)
 	}
 
 	capecTechniques, err := capec.Fetch()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf("Failed to fetch CAPEC. err: %w", err)
+		return nil, nil, nil, fmt.Errorf("Failed to fetch CAPEC. err: %w", err)
 	}
 	techniques := append(attackTechniques, capecTechniques...)
 
 	cweToCapecs, err := cwe.Fetch()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf("Failed to fetch CWE. err: %w", err)
+		return nil, nil, nil, fmt.Errorf("Failed to fetch CWE. err: %w", err)
 	}
 
 	cveToCwes, err := nvd.Fetch()
 	if err != nil {
-		return nil, nil, nil, xerrors.Errorf("Failed to fetch NVD CVE. err: %w", err)
+		return nil, nil, nil, fmt.Errorf("Failed to fetch NVD CVE. err: %w", err)
 	}
 
 	return techniques, buildCveToTechniques(techniques, cweToCapecs, cveToCwes), attackers, nil

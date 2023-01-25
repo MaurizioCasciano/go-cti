@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -8,7 +9,6 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/parnurzeal/gorequest"
 	"github.com/spf13/viper"
-	"golang.org/x/xerrors"
 )
 
 // CacheDir :
@@ -48,16 +48,16 @@ func SetLogger(logToFile bool, logDir string, debug, logJSON bool) error {
 		if _, err := os.Stat(logDir); err != nil {
 			if os.IsNotExist(err) {
 				if err := os.Mkdir(logDir, 0700); err != nil {
-					return xerrors.Errorf("Failed to create log directory. err: %w", err)
+					return fmt.Errorf("Failed to create log directory. err: %w", err)
 				}
 			} else {
-				return xerrors.Errorf("Failed to check log directory. err: %w", err)
+				return fmt.Errorf("Failed to check log directory. err: %w", err)
 			}
 		}
 
 		logPath := filepath.Join(logDir, "go-cti.log")
 		if _, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644); err != nil {
-			return xerrors.Errorf("Failed to open a log file. err: %w", err)
+			return fmt.Errorf("Failed to open a log file. err: %w", err)
 		}
 		handler = log15.MultiHandler(
 			log15.Must.FileHandler(logPath, logFormat),
@@ -76,7 +76,7 @@ func FetchURL(url string) ([]byte, error) {
 
 	resp, body, err := gorequest.New().Proxy(httpProxy).Get(url).Type("text").EndBytes()
 	if len(err) > 0 || resp == nil || resp.StatusCode != 200 {
-		return nil, xerrors.Errorf("HTTP error. url: %s, err: %w", url, err)
+		return nil, fmt.Errorf("HTTP error. url: %s, err: %w", url, err)
 	}
 	return body, nil
 }
