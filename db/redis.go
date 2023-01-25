@@ -85,7 +85,7 @@ func (r *RedisDriver) connectRedis(dbPath string, option Option) error {
 	var err error
 	var opt *redis.Options
 	if opt, err = redis.ParseURL(dbPath); err != nil {
-		return xerrors.Errorf("Failed to parse url. err: %w", err)
+		return fmt.Errorf("Failed to parse url. err: %w", err)
 	}
 	if 0 < option.RedisTimeout.Seconds() {
 		opt.ReadTimeout = option.RedisTimeout
@@ -100,7 +100,7 @@ func (r *RedisDriver) CloseDB() (err error) {
 		return
 	}
 	if err = r.conn.Close(); err != nil {
-		return xerrors.Errorf("Failed to close DB. Type: %s. err: %w", r.name, err)
+		return fmt.Errorf("Failed to close DB. Type: %s. err: %w", r.name, err)
 	}
 	return
 }
@@ -116,12 +116,12 @@ func (r *RedisDriver) IsGoCTIModelV1() (bool, error) {
 
 	exists, err := r.conn.Exists(ctx, fetchMetaKey).Result()
 	if err != nil {
-		return false, xerrors.Errorf("Failed to Exists. err: %w", err)
+		return false, fmt.Errorf("Failed to Exists. err: %w", err)
 	}
 	if exists == 0 {
 		keys, _, err := r.conn.Scan(ctx, 0, "CTI#*", 1).Result()
 		if err != nil {
-			return false, xerrors.Errorf("Failed to Scan. err: %w", err)
+			return false, fmt.Errorf("Failed to Scan. err: %w", err)
 		}
 		if len(keys) == 0 {
 			return false, nil
@@ -138,7 +138,7 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 
 	exists, err := r.conn.Exists(ctx, fetchMetaKey).Result()
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to Exists. err: %w", err)
+		return nil, fmt.Errorf("Failed to Exists. err: %w", err)
 	}
 	if exists == 0 {
 		return &models.FetchMeta{GoCTIRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion, LastFetchedAt: time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)}, nil
@@ -146,28 +146,28 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 
 	revision, err := r.conn.HGet(ctx, fetchMetaKey, "Revision").Result()
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to HGet Revision. err: %w", err)
+		return nil, fmt.Errorf("Failed to HGet Revision. err: %w", err)
 	}
 
 	verstr, err := r.conn.HGet(ctx, fetchMetaKey, "SchemaVersion").Result()
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to HGet SchemaVersion. err: %w", err)
+		return nil, fmt.Errorf("Failed to HGet SchemaVersion. err: %w", err)
 	}
 	version, err := strconv.ParseUint(verstr, 10, 8)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to ParseUint. err: %w", err)
+		return nil, fmt.Errorf("Failed to ParseUint. err: %w", err)
 	}
 
 	datestr, err := r.conn.HGet(ctx, fetchMetaKey, "LastFetchedAt").Result()
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {
-			return nil, xerrors.Errorf("Failed to HGet LastFetchedAt. err: %w", err)
+			return nil, fmt.Errorf("Failed to HGet LastFetchedAt. err: %w", err)
 		}
 		datestr = time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
 	}
 	date, err := time.Parse(time.RFC3339, datestr)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to Parse date. err: %w", err)
+		return nil, fmt.Errorf("Failed to Parse date. err: %w", err)
 	}
 
 	return &models.FetchMeta{GoCTIRevision: revision, SchemaVersion: uint(version), LastFetchedAt: date}, nil
@@ -191,13 +191,13 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 	oldDepsStr, err := r.conn.Get(ctx, depKey).Result()
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {
-			return xerrors.Errorf("Failed to Get key: %s. err: %w", depKey, err)
+			return fmt.Errorf("Failed to Get key: %s. err: %w", depKey, err)
 		}
 		oldDepsStr = `{"cti": {}, "mapping": {}}`
 	}
 	var oldDeps map[string]map[string]map[string]struct{}
 	if err := json.Unmarshal([]byte(oldDepsStr), &oldDeps); err != nil {
-		return xerrors.Errorf("Failed to unmarshal JSON. err: %w", err)
+		return fmt.Errorf("Failed to unmarshal JSON. err: %w", err)
 	}
 
 	log15.Info("Inserting Cyber Threat Intelligences...")
@@ -209,7 +209,7 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 		for _, technique := range techniques[idx.From:idx.To] {
 			j, err := json.Marshal(technique)
 			if err != nil {
-				return xerrors.Errorf("Failed to marshal json. err: %w", err)
+				return fmt.Errorf("Failed to marshal json. err: %w", err)
 			}
 
 			_ = pipe.Set(ctx, fmt.Sprintf(ctiIDKeyFormat, technique.TechniqueID), j, 0)
@@ -217,7 +217,7 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 			delete(oldDeps["cti"], technique.TechniqueID)
 		}
 		if _, err := pipe.Exec(ctx); err != nil {
-			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+			return fmt.Errorf("Failed to exec pipeline. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -246,7 +246,7 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 			}
 		}
 		if _, err := pipe.Exec(ctx); err != nil {
-			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+			return fmt.Errorf("Failed to exec pipeline. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -259,7 +259,7 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 		for _, attacker := range attackers[idx.From:idx.To] {
 			j, err := json.Marshal(attacker)
 			if err != nil {
-				return xerrors.Errorf("Failed to marshal json. err: %w", err)
+				return fmt.Errorf("Failed to marshal json. err: %w", err)
 			}
 
 			_ = pipe.Set(ctx, fmt.Sprintf(ctiIDKeyFormat, attacker.AttackerID), j, 0)
@@ -287,7 +287,7 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 			}
 		}
 		if _, err := pipe.Exec(ctx); err != nil {
-			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+			return fmt.Errorf("Failed to exec pipeline. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -305,11 +305,11 @@ func (r *RedisDriver) InsertCti(techniques []models.Technique, mappings []models
 	}
 	newDepsJSON, err := json.Marshal(newDeps)
 	if err != nil {
-		return xerrors.Errorf("Failed to Marshal JSON. err: %w", err)
+		return fmt.Errorf("Failed to Marshal JSON. err: %w", err)
 	}
 	_ = pipe.Set(ctx, depKey, string(newDepsJSON), 0)
 	if _, err := pipe.Exec(ctx); err != nil {
-		return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+		return fmt.Errorf("Failed to exec pipeline. err: %w", err)
 	}
 
 	return nil
@@ -321,7 +321,7 @@ func (r *RedisDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 
 	techniqueIDs, attackerIDs, err := classCtiIDs([]string{ctiID})
 	if err != nil {
-		return models.CTI{}, xerrors.Errorf("Failed to classCtiIDs. err: %w", err)
+		return models.CTI{}, fmt.Errorf("Failed to classCtiIDs. err: %w", err)
 	}
 
 	cti := models.CTI{}
@@ -330,10 +330,10 @@ func (r *RedisDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 
 		str, err := r.conn.Get(ctx, fmt.Sprintf(ctiIDKeyFormat, techniqueIDs[0])).Result()
 		if err != nil {
-			return models.CTI{}, xerrors.Errorf("Failed to Get. key: %s, err: %s", fmt.Sprintf(ctiIDKeyFormat, techniqueIDs[0]), err)
+			return models.CTI{}, fmt.Errorf("Failed to Get. key: %s, err: %s", fmt.Sprintf(ctiIDKeyFormat, techniqueIDs[0]), err)
 		}
 		if err := json.Unmarshal([]byte(str), &cti.Technique); err != nil {
-			return models.CTI{}, xerrors.Errorf("Failed to Unmarshal JSON. err: %w", err)
+			return models.CTI{}, fmt.Errorf("Failed to Unmarshal JSON. err: %w", err)
 		}
 	} else {
 		cti.Type = models.AttackerType

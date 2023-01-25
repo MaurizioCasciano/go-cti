@@ -20,11 +20,11 @@ func Fetch() ([]models.Technique, []models.Attacker, error) {
 
 	res, err := utils.FetchURL(attackURL)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("Failed to fetch MITRE ATT&CK JSON. err: %w", err)
+		return nil, nil, fmt.Errorf("Failed to fetch MITRE ATT&CK JSON. err: %w", err)
 	}
 	techniques, attackers, err := parse(res)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("Failed to parse MITRE ATT&CK Cyber Threat Intelligence. err: %w", err)
+		return nil, nil, fmt.Errorf("Failed to parse MITRE ATT&CK Cyber Threat Intelligence. err: %w", err)
 	}
 	return techniques, attackers, nil
 }
@@ -32,12 +32,12 @@ func Fetch() ([]models.Technique, []models.Attacker, error) {
 func parse(res []byte) ([]models.Technique, []models.Attacker, error) {
 	var r root
 	if err := json.Unmarshal(res, &r); err != nil {
-		return nil, nil, xerrors.Errorf("Failed to unmarshal json. err: %w", err)
+		return nil, nil, fmt.Errorf("Failed to unmarshal json. err: %w", err)
 	}
 
 	attackPatterns, attackers, others, relationships, err := parseEachObject(r.Objects)
 	if err != nil {
-		return nil, nil, xerrors.Errorf("Failed to parseEachObject. err: %w", err)
+		return nil, nil, fmt.Errorf("Failed to parseEachObject. err: %w", err)
 	}
 
 	techniques := []models.Technique{}
@@ -47,7 +47,7 @@ func parse(res []byte) ([]models.Technique, []models.Attacker, error) {
 		}
 		technique, err := fillTechnique(attackPattern, relationships[id], attackPatterns, attackers, others)
 		if err != nil {
-			return nil, nil, xerrors.Errorf("Failed to fillTechnique. err: %w", err)
+			return nil, nil, fmt.Errorf("Failed to fillTechnique. err: %w", err)
 		}
 		techniques = append(techniques, technique)
 	}
@@ -60,7 +60,7 @@ func parse(res []byte) ([]models.Technique, []models.Attacker, error) {
 			}
 			technique, ok := attackPatterns[rel.targetRef]
 			if !ok {
-				return nil, nil, xerrors.Errorf("Failed to get Technique. rel.id: %s, rel.targetRef: %s", rel.id, rel.targetRef)
+				return nil, nil, fmt.Errorf("Failed to get Technique. rel.id: %s, rel.targetRef: %s", rel.id, rel.targetRef)
 			}
 			techniquesUsed[rel.sourceRef] = append(techniquesUsed[rel.sourceRef], techniqueUsed{
 				id:         technique.id,
@@ -79,7 +79,7 @@ func parse(res []byte) ([]models.Technique, []models.Attacker, error) {
 			}
 			software, ok := attackers[rel.targetRef]
 			if !ok {
-				return nil, nil, xerrors.Errorf("Failed to get Attacker Software. rel.id: %s, rel.targetRef: %s", rel.id, rel.targetRef)
+				return nil, nil, fmt.Errorf("Failed to get Attacker Software. rel.id: %s, rel.targetRef: %s", rel.id, rel.targetRef)
 			}
 			groupsUsed[rel.sourceRef] = append(groupsUsed[rel.sourceRef], groupUsed{
 				name:        software.name,
@@ -96,7 +96,7 @@ func parse(res []byte) ([]models.Technique, []models.Attacker, error) {
 		}
 		attackerInfo, err := fillAttacker(attacker, relationships[id], attackers, techniquesUsed[id], groupsUsed[id])
 		if err != nil {
-			return nil, nil, xerrors.Errorf("Failed to fillAttacker. err: %w", err)
+			return nil, nil, fmt.Errorf("Failed to fillAttacker. err: %w", err)
 		}
 		attackerInfos = append(attackerInfos, attackerInfo)
 	}
@@ -153,7 +153,7 @@ func parseEachObject(root []ctiObject) (map[string]attackPattern, map[string]att
 	for id, component := range dataComponents {
 		ds, ok := dataSources[component.dataSourceRef]
 		if !ok {
-			return nil, nil, nil, nil, xerrors.Errorf("Failed to get data source name. id: %s, err: broken relationships", id)
+			return nil, nil, nil, nil, fmt.Errorf("Failed to get data source name. id: %s, err: broken relationships", id)
 		}
 		others[id] = otherInfo{
 			objType:     "x-mitre-data-component",
@@ -304,7 +304,7 @@ func fillTechnique(attackPattern attackPattern, relationships []relationship, at
 		case "attack-pattern":
 			info, ok := attackPatterns[rel.sourceRef]
 			if !ok {
-				return models.Technique{}, xerrors.Errorf("Failed to get attack-pattern. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
+				return models.Technique{}, fmt.Errorf("Failed to get attack-pattern. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
 			}
 			if info.deprecated {
 				continue
@@ -315,7 +315,7 @@ func fillTechnique(attackPattern attackPattern, relationships []relationship, at
 		case "course-of-action":
 			info, ok := others[rel.sourceRef]
 			if !ok {
-				return models.Technique{}, xerrors.Errorf("Failed to get course-of-action. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
+				return models.Technique{}, fmt.Errorf("Failed to get course-of-action. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
 			}
 			if info.deprecated {
 				continue
@@ -327,7 +327,7 @@ func fillTechnique(attackPattern attackPattern, relationships []relationship, at
 		case "intrusion-set", "malware", "tool", "campaign":
 			info, ok := attackers[rel.sourceRef]
 			if !ok {
-				return models.Technique{}, xerrors.Errorf("Failed to get attacker. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
+				return models.Technique{}, fmt.Errorf("Failed to get attacker. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
 			}
 			if info.deprecated {
 				continue
@@ -339,7 +339,7 @@ func fillTechnique(attackPattern attackPattern, relationships []relationship, at
 		case "x-mitre-data-component":
 			info, ok := others[rel.sourceRef]
 			if !ok {
-				return models.Technique{}, xerrors.Errorf("Failed to get data-component. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
+				return models.Technique{}, fmt.Errorf("Failed to get data-component. relationship id: %s, err: broken relationships. does not exists source ref: %s", rel.id, rel.sourceRef)
 			}
 			if info.deprecated {
 				continue
@@ -354,7 +354,7 @@ func fillTechnique(attackPattern attackPattern, relationships []relationship, at
 	for _, phase := range attackPattern.killChainPhases {
 		info, ok := others[phase]
 		if !ok {
-			return models.Technique{}, xerrors.Errorf("Failed to get kill chain phase name. phase_name(x_mitre_shortname): %s, err: broken relationships", phase)
+			return models.Technique{}, fmt.Errorf("Failed to get kill chain phase name. phase_name(x_mitre_shortname): %s, err: broken relationships", phase)
 		}
 		technique.MitreAttack.KillChainPhases = append(technique.MitreAttack.KillChainPhases, models.KillChainPhase{Tactic: info.name})
 	}

@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -71,17 +72,17 @@ func (r *RDBDriver) OpenDB(dbType, dbPath string, debugSQL bool, _ Option) (lock
 	case dialectPostgreSQL:
 		r.conn, err = gorm.Open(postgres.Open(dbPath), &gormConfig)
 	default:
-		err = xerrors.Errorf("Not Supported DB dialects. r.name: %s", r.name)
+		err = fmt.Errorf("Not Supported DB dialects. r.name: %s", r.name)
 	}
 
 	if err != nil {
 		if r.name == dialectSqlite3 {
 			switch err.(sqlite3.Error).Code {
 			case sqlite3.ErrLocked, sqlite3.ErrBusy:
-				return true, xerrors.Errorf("Failed to open DB. dbtype: %s, dbpath: %s, err: %w", dbType, dbPath, err)
+				return true, fmt.Errorf("Failed to open DB. dbtype: %s, dbpath: %s, err: %w", dbType, dbPath, err)
 			}
 		}
-		return false, xerrors.Errorf("Failed to open DB. dbtype: %s, dbpath: %s, err: %w", dbType, dbPath, err)
+		return false, fmt.Errorf("Failed to open DB. dbtype: %s, dbpath: %s, err: %w", dbType, dbPath, err)
 	}
 
 	if r.name == dialectSqlite3 {
@@ -98,10 +99,10 @@ func (r *RDBDriver) CloseDB() (err error) {
 
 	var sqlDB *sql.DB
 	if sqlDB, err = r.conn.DB(); err != nil {
-		return xerrors.Errorf("Failed to get DB Object. err : %w", err)
+		return fmt.Errorf("Failed to get DB Object. err : %w", err)
 	}
 	if err = sqlDB.Close(); err != nil {
-		return xerrors.Errorf("Failed to close DB. Type: %s. err: %w", r.name, err)
+		return fmt.Errorf("Failed to close DB. Type: %s. err: %w", r.name, err)
 	}
 	return
 }
@@ -155,7 +156,7 @@ func (r *RDBDriver) MigrateDB() error {
 		&models.SoftwarePlatform{},
 		&models.GroupUsed{},
 	); err != nil {
-		return xerrors.Errorf("Failed to migrate. err: %w", err)
+		return fmt.Errorf("Failed to migrate. err: %w", err)
 	}
 
 	return nil
@@ -231,7 +232,7 @@ func (r *RDBDriver) deleteAndInsertCti(conn *gorm.DB, techniques []models.Techni
 		models.CveToTechniqueID{}, models.CveToTechniques{},
 	} {
 		if err := tx.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error; err != nil {
-			return xerrors.Errorf("Failed to delete old records. err: %w", err)
+			return fmt.Errorf("Failed to delete old records. err: %w", err)
 		}
 	}
 
@@ -246,7 +247,7 @@ func (r *RDBDriver) deleteAndInsertCti(conn *gorm.DB, techniques []models.Techni
 	bar := pb.StartNew(len(techniques))
 	for idx := range chunkSlice(len(techniques), batchSize) {
 		if err = tx.Create(techniques[idx.From:idx.To]).Error; err != nil {
-			return xerrors.Errorf("Failed to insert. err: %w", err)
+			return fmt.Errorf("Failed to insert. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -256,7 +257,7 @@ func (r *RDBDriver) deleteAndInsertCti(conn *gorm.DB, techniques []models.Techni
 	bar = pb.StartNew(len(mappings))
 	for idx := range chunkSlice(len(mappings), batchSize) {
 		if err = tx.Create(mappings[idx.From:idx.To]).Error; err != nil {
-			return xerrors.Errorf("Failed to insert. err: %w", err)
+			return fmt.Errorf("Failed to insert. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -266,7 +267,7 @@ func (r *RDBDriver) deleteAndInsertCti(conn *gorm.DB, techniques []models.Techni
 	bar = pb.StartNew(len(attackers))
 	for idx := range chunkSlice(len(attackers), batchSize) {
 		if err = tx.Create(attackers[idx.From:idx.To]).Error; err != nil {
-			return xerrors.Errorf("Failed to insert. err: %w", err)
+			return fmt.Errorf("Failed to insert. err: %w", err)
 		}
 		bar.Add(idx.To - idx.From)
 	}
@@ -279,7 +280,7 @@ func (r *RDBDriver) deleteAndInsertCti(conn *gorm.DB, techniques []models.Techni
 func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 	techniqueIDs, attackerIDs, err := classCtiIDs([]string{ctiID})
 	if err != nil {
-		return models.CTI{}, xerrors.Errorf("Failed to classCtiIDs. err: %w", err)
+		return models.CTI{}, fmt.Errorf("Failed to classCtiIDs. err: %w", err)
 	}
 
 	cti := models.CTI{}
@@ -291,7 +292,7 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 			Preload("Mitigations").
 			Where(&models.Technique{TechniqueID: techniqueIDs[0]}).
 			Take(&cti.Technique).Error; err != nil {
-			return models.CTI{}, xerrors.Errorf("Failed to get Technique by CTI-ID. err: %w", err)
+			return models.CTI{}, fmt.Errorf("Failed to get Technique by CTI-ID. err: %w", err)
 		}
 
 		switch cti.Technique.Type {
@@ -301,9 +302,9 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 				Where(&models.MitreAttack{TechniqueID: cti.Technique.ID}).
 				Take(&cti.Technique.MitreAttack).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return models.CTI{}, xerrors.Errorf("Failed to get MitreAttack. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return models.CTI{}, fmt.Errorf("Failed to get MitreAttack. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return models.CTI{}, xerrors.Errorf("Failed to get MitreAttack. err: %w", err)
+				return models.CTI{}, fmt.Errorf("Failed to get MitreAttack. err: %w", err)
 			}
 		case models.CAPECType:
 			if err := r.conn.
@@ -311,9 +312,9 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 				Where(&models.Capec{TechniqueID: cti.Technique.ID}).
 				Take(&cti.Technique.Capec).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return models.CTI{}, xerrors.Errorf("Failed to get Capec. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return models.CTI{}, fmt.Errorf("Failed to get Capec. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return models.CTI{}, xerrors.Errorf("Failed to get Capec. err: %w", err)
+				return models.CTI{}, fmt.Errorf("Failed to get Capec. err: %w", err)
 			}
 		}
 	} else {
@@ -324,7 +325,7 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 			Preload("References").
 			Where("attacker_id IN ?", attackerIDs).
 			Take(&cti.Attacker).Error; err != nil {
-			return models.CTI{}, xerrors.Errorf("Failed to get Attacker by CTI-ID. err: %w", err)
+			return models.CTI{}, fmt.Errorf("Failed to get Attacker by CTI-ID. err: %w", err)
 		}
 
 		switch cti.Attacker.Type {
@@ -334,9 +335,9 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 				Where(&models.AttackerGroup{AttackerID: cti.Attacker.ID}).
 				Take(&cti.Attacker.Group).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return models.CTI{}, xerrors.Errorf("Failed to get Group. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return models.CTI{}, fmt.Errorf("Failed to get Group. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return models.CTI{}, xerrors.Errorf("Failed to get Group. err: %w", err)
+				return models.CTI{}, fmt.Errorf("Failed to get Group. err: %w", err)
 			}
 		case models.SoftwareType:
 			if err := r.conn.
@@ -344,7 +345,7 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 				Where(&models.AttackerSoftware{AttackerID: cti.Attacker.ID}).
 				Take(&cti.Attacker.Software).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return models.CTI{}, xerrors.Errorf("Failed to get Software. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return models.CTI{}, fmt.Errorf("Failed to get Software. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
 				return models.CTI{}, xerrors.Errorf("Failed to get Software. err: %w", err)
 			}

@@ -1,0 +1,40 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a CTI application",
+        "title": "Go-CTI",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:1329",
+    "basePath": "/",
+    "paths": {
+        "/": {
+            "get": {
+                "description": "Info",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Message"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Message": {
+            "type": "object",
+            "properties": {
+                "text": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

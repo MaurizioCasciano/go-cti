@@ -13,3 +13,15 @@ tasks:
   fetch:
     cmds:
       - ./go-cti fetch threat
+  server:
+    cmds:
+      - ./go-cti server
+  server-dev:
+    cmds:
+      - go run main.go server
+  swagger:
+    cmds:
+      - swag init
+  search-cve:
+    cmds:
+      - go run main.go search cve {{.CLI_ARGS}} # CVE-2017-15131
