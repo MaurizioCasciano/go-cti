@@ -16,3 +16,6 @@ tasks:
   server:
     cmds:
       - ./go-cti server
+  swagger:
+    cmds:
+      - swag init

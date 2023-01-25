@@ -1,0 +1,26 @@
+basePath: /
+definitions:
+  models.Message:
+    properties:
+      text:
+        type: string
+    type: object
+host: localhost:1329
+info:
+  contact: {}
+  description: This is a CTI application
+  title: Go-CTI
+  version: "1.0"
+paths:
+  /:
+    get:
+      description: Info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Message'
+      summary: Info
+swagger: "2.0"
