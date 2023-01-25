@@ -24,6 +24,7 @@ func Start(logToFile bool, logDir string, driver db.DB) error {
 	// Middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 
 	// setup access logger
 	if logToFile {
