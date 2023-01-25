@@ -16,6 +16,9 @@ tasks:
   server:
     cmds:
       - ./go-cti server
+  server-dev:
+    cmds:
+      - go run main.go server
   swagger:
     cmds:
       - swag init
