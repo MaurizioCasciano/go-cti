@@ -50,8 +50,11 @@ func Start(logToFile bool, logDir string, driver db.DB) error {
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
+	protocol := "http"
 	bindURL := fmt.Sprintf("%s:%s", viper.GetString("bind"), viper.GetString("port"))
-	log15.Info("Listening...", "URL", bindURL)
+
+	log15.Info("Listening...", "URL", protocol+"://"+bindURL)
+	log15.Info("Swagger", "URL", protocol+"://"+bindURL+"/swagger/index.html")
 
 	return e.Start(bindURL)
 }
