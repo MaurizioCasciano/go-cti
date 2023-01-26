@@ -110,6 +110,13 @@ func getCtiByMultiCtiID(driver db.DB) echo.HandlerFunc {
 	}
 }
 
+// Techniques by CVE
+// @Summary Techniques by CVE
+// @Description Techniques by CVE
+// @Param	cve	path	string  true  "CVE ID"
+// @Router /cves/{cve} [get]
+// @produce json
+// @Success 200 {object} []string
 func getTechniqueIDsByCveID(driver db.DB) echo.HandlerFunc {
 	return func(context echo.Context) (err error) {
 		cve := context.Param("cve")
