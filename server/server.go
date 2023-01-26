@@ -50,8 +50,11 @@ func Start(logToFile bool, logDir string, driver db.DB) error {
 	// Swagger
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
+	protocol := "http"
 	bindURL := fmt.Sprintf("%s:%s", viper.GetString("bind"), viper.GetString("port"))
-	log15.Info("Listening...", "URL", bindURL)
+
+	log15.Info("Listening...", "URL", protocol+"://"+bindURL)
+	log15.Info("Swagger", "URL", protocol+"://"+bindURL+"/swagger/index.html")
 
 	return e.Start(bindURL)
 }
@@ -110,6 +113,13 @@ func getCtiByMultiCtiID(driver db.DB) echo.HandlerFunc {
 	}
 }
 
+// Techniques by CVE
+// @Summary Techniques by CVE
+// @Description Techniques by CVE
+// @Param	cve	path	string  true  "CVE ID"
+// @Router /cves/{cve} [get]
+// @produce json
+// @Success 200 {object} []string
 func getTechniqueIDsByCveID(driver db.DB) echo.HandlerFunc {
 	return func(context echo.Context) (err error) {
 		cve := context.Param("cve")

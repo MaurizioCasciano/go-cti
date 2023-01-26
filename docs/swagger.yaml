@@ -23,4 +23,23 @@ paths:
           schema:
             $ref: '#/definitions/models.Message'
       summary: Info
+  /cves/{cve}:
+    get:
+      description: Techniques by CVE
+      parameters:
+      - description: CVE ID
+        in: path
+        name: cve
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Techniques by CVE
 swagger: "2.0"

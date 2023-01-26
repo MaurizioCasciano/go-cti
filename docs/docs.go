@@ -32,6 +32,35 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/cves/{cve}": {
+            "get": {
+                "description": "Techniques by CVE",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Techniques by CVE",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CVE ID",
+                        "name": "cve",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

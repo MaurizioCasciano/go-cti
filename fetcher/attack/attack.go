@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/inconshreveable/log15"
-	"golang.org/x/xerrors"
-
 	"github.com/vulsio/go-cti/models"
 	"github.com/vulsio/go-cti/utils"
 )
@@ -589,7 +587,7 @@ func fillAttacker(attacker attacker, relationships []relationship, attackers map
 
 		attackerUsed, ok := attackers[rel.sourceRef]
 		if !ok {
-			return models.Attacker{}, xerrors.Errorf("Failed to get attacker used. rel.id: %s, rel.sourceRef: %s", rel.id, rel.sourceRef)
+			return models.Attacker{}, fmt.Errorf("Failed to get attacker used. rel.id: %s, rel.sourceRef: %s", rel.id, rel.sourceRef)
 		}
 		if attackerUsed.deprecated {
 			continue
