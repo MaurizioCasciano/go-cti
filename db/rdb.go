@@ -4,10 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"time"
-
 	"github.com/cheggaaa/pb/v3"
 	"github.com/inconshreveable/log15"
 	"github.com/mattn/go-sqlite3"
@@ -19,6 +15,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+	"log"
+	"os"
+	"time"
 
 	"github.com/vulsio/go-cti/config"
 	"github.com/vulsio/go-cti/models"
@@ -347,7 +346,7 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					return models.CTI{}, fmt.Errorf("Failed to get Software. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return models.CTI{}, xerrors.Errorf("Failed to get Software. err: %w", err)
+				return models.CTI{}, fmt.Errorf("Failed to get Software. err: %w", err)
 			}
 		}
 	}
@@ -359,7 +358,7 @@ func (r *RDBDriver) GetCtiByCtiID(ctiID string) (models.CTI, error) {
 func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 	techniqueIDs, attackerIDs, err := classCtiIDs(ctiIDs)
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to classCtiIDs. err: %w", err)
+		return nil, fmt.Errorf("Failed to classCtiIDs. err: %w", err)
 	}
 
 	ctis := []models.CTI{}
@@ -370,7 +369,7 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 		Preload("Mitigations").
 		Where("technique_id IN ?", techniqueIDs).
 		Find(&techniques).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get Techniques by CTI-IDs. err: %w", err)
+		return nil, fmt.Errorf("Failed to get Techniques by CTI-IDs. err: %w", err)
 	}
 	for i := range techniques {
 		switch techniques[i].Type {
@@ -380,9 +379,9 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 				Where(&models.MitreAttack{TechniqueID: techniques[i].ID}).
 				Take(&techniques[i].MitreAttack).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return nil, xerrors.Errorf("Failed to get MitreAttack. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return nil, fmt.Errorf("Failed to get MitreAttack. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return nil, xerrors.Errorf("Failed to get MitreAttack. err: %w", err)
+				return nil, fmt.Errorf("Failed to get MitreAttack. err: %w", err)
 			}
 		case models.CAPECType:
 			if err := r.conn.
@@ -390,9 +389,9 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 				Where(&models.Capec{TechniqueID: techniques[i].ID}).
 				Take(&techniques[i].Capec).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return nil, xerrors.Errorf("Failed to get Capec. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return nil, fmt.Errorf("Failed to get Capec. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return nil, xerrors.Errorf("Failed to get Capec. err: %w", err)
+				return nil, fmt.Errorf("Failed to get Capec. err: %w", err)
 			}
 		}
 		ctis = append(ctis, models.CTI{
@@ -407,7 +406,7 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 		Preload("References").
 		Where("attacker_id IN ?", attackerIDs).
 		Find(&attackers).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get Attackers by CTI-IDs. err: %w", err)
+		return nil, fmt.Errorf("Failed to get Attackers by CTI-IDs. err: %w", err)
 	}
 
 	for i := range attackers {
@@ -418,9 +417,9 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 				Where(&models.AttackerGroup{AttackerID: attackers[i].ID}).
 				Take(&attackers[i].Group).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return nil, xerrors.Errorf("Failed to get Group. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return nil, fmt.Errorf("Failed to get Group. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return nil, xerrors.Errorf("Failed to get Group. err: %w", err)
+				return nil, fmt.Errorf("Failed to get Group. err: %w", err)
 			}
 		case models.SoftwareType:
 			if err := r.conn.
@@ -428,9 +427,9 @@ func (r *RDBDriver) GetCtisByMultiCtiID(ctiIDs []string) ([]models.CTI, error) {
 				Where(&models.AttackerSoftware{AttackerID: attackers[i].ID}).
 				Take(&attackers[i].Software).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return nil, xerrors.Errorf("Failed to get Software. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
+					return nil, fmt.Errorf("Failed to get Software. DB relationship may be broken, use `$ go-cti fetch threat` to recreate DB. err: %w", err)
 				}
-				return nil, xerrors.Errorf("Failed to get Software. err: %w", err)
+				return nil, fmt.Errorf("Failed to get Software. err: %w", err)
 			}
 		}
 		ctis = append(ctis, models.CTI{
@@ -452,7 +451,7 @@ func (r *RDBDriver) GetTechniqueIDsByCveID(cveID string) ([]string, error) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return []string{}, nil
 		}
-		return nil, xerrors.Errorf("Failed to get ID by CVE-ID. err: %w", err)
+		return nil, fmt.Errorf("Failed to get ID by CVE-ID. err: %w", err)
 	}
 
 	techniqueIDs := []string{}
@@ -461,7 +460,7 @@ func (r *RDBDriver) GetTechniqueIDsByCveID(cveID string) ([]string, error) {
 		Select("technique_id").
 		Where(&models.CveToTechniqueID{CveToTechniquesID: mappingID}).
 		Find(&techniqueIDs).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get TechniqueIDs by ID. err: %w", err)
+		return nil, fmt.Errorf("Failed to get TechniqueIDs by ID. err: %w", err)
 	}
 
 	return techniqueIDs, nil
@@ -474,7 +473,7 @@ func (r *RDBDriver) GetTechniqueIDsByMultiCveID(cveIDs []string) (map[string][]s
 		Preload("TechniqueIDs").
 		Where("cve_id IN ?", cveIDs).
 		Find(&mappings).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get TechniqueIDs by CVE-IDs. err: %w", err)
+		return nil, fmt.Errorf("Failed to get TechniqueIDs by CVE-IDs. err: %w", err)
 	}
 
 	techniqueIDs := map[string][]string{}
@@ -493,7 +492,7 @@ func (r *RDBDriver) GetAttackerIDsByTechniqueIDs(techniqueIDs []string) ([]strin
 	if err := r.conn.
 		Preload("TechniquesUsed").
 		Find(&attackers).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get Attackers by TechniqueIDs. err: %w", err)
+		return nil, fmt.Errorf("Failed to get Attackers by TechniqueIDs. err: %w", err)
 	}
 
 	attackerIDs := []string{}
